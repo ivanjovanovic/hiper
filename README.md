@@ -1,5 +1,11 @@
 # Hiper - Viper insired configuration Haskell library
 
+## Requirements
+
+* Client can define config type to be read adding type safety to the config
+* Instance of the type should be provided as defaults.
+
+## Viper inspiration
 Viper is a complete configuration solution for go applications including 12 factor apps. It is designed to work within an application, and can handle all types of configuration needs and formats. It supports:
 
 setting defaults

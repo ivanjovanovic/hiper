@@ -1,13 +1,36 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Hiper
     ( HiperConfig (..)
-    , parseDefault
     ) where
 
--- Configure configuration sources for Hiper configuration
+import Data.IORef
+import Data.Text
+import Data.HashMap.Lazy as H
+
+-- | Path to search for config files
+type Path = Text
+
+-- | Name of a config value
+type Name = Text
+
+-- | Extension of the config file
+type Extension = Text
+
+-- Hiper configuration
 data HiperConfig = HiperConfig {
-  fromFile :: String
+    hcPaths :: [Path]
+  , hcFile :: Name
+  , hcExtensions :: [Extension]
   }
 
-parseDefault :: a -> HiperConfig -> IO a
-parseDefault d c = return d
+-- | Values stored in the config
+data Value = Bool Bool
+           | String Text
+           | Number Rational
+           | List [Value]
+
+-- | Hiper configuration
+data Hiper = Hiper {
+    values :: IORef (H.HashMap Name Value)
+  , hcConfig :: HiperConfig
+  }

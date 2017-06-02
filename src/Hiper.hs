@@ -5,7 +5,7 @@ module Hiper
 
 import Data.IORef
 import Data.Text
-import Data.HashMap.Lazy as H
+import Data.Map.Lazy as M
 
 -- | Path to search for config files
 type Path = Text
@@ -16,11 +16,12 @@ type Name = Text
 -- | Extension of the config file
 type Extension = Text
 
--- Hiper configuration
+-- | Hiper configuration
 data HiperConfig = HiperConfig {
     hcPaths :: [Path]
   , hcFile :: Name
   , hcExtensions :: [Extension]
+  , hcDefaults :: M.Map Name Value
   }
 
 -- | Values stored in the config
@@ -29,8 +30,20 @@ data Value = Bool Bool
            | Number Rational
            | List [Value]
 
--- | Hiper configuration
+-- | Hiper
 data Hiper = Hiper {
-    values :: IORef (H.HashMap Name Value)
+    values :: IORef (M.Map Name Value)
   , hcConfig :: HiperConfig
   }
+
+-- | Take declaration of how config should be loaded and load it
+loadConfig :: HiperConfig -> IO Hiper
+loadConfig c = do
+  mapIORef <- newIORef M.empty
+  -- load IORef with the default values
+
+  -- check if there are ENV variables with the same names to take over defaults
+  return $ Hiper mapIORef c
+
+getConfigValue :: Hiper -> Name -> Maybe Value
+getConfigValue = undefined

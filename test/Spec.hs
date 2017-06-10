@@ -2,14 +2,14 @@
 module Main where
 
 import Test.Hspec
-import Test.QuickCheck
-import Control.Exception (evaluate)
+import Prelude hiding (lookup)
 
-import Hiper
+import Data.Hiper
 
 main :: IO ()
 main = hspec $ do
   describe "Hiper defaults" $ do
     it "returns defaults when asked for defaults" $ do
-      v <- parseDefault (1 :: Int) (HiperConfig "test")
-      v `shouldBe` (1 :: Int)
+      hiper <- loadConfig emptyConfig
+      val <- lookup hiper "test" :: IO (Maybe Int)
+      val `shouldBe` Nothing

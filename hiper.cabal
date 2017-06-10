@@ -15,12 +15,18 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Hiper
+  exposed-modules:
+                  Data.Hiper
+  other-modules:
+                Data.Hiper.Instances
+                Data.Hiper.Types.Internal
+
   build-depends:       base >= 4.7 && < 5
                      , mtl >= 2.2 && < 2.3
                      , containers >= 0.5.7 && < 0.6
                      , text >= 1.2.2.1 && < 1.3
                      , unordered-containers >= 0.2.8.0 && < 0.3
+                     , bytestring >= 0.10.8.1 && < 0.10.9
   default-language:    Haskell2010
 
 source-repository head

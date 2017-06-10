@@ -1,11 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Hiper
+module Data.Hiper
     ( HiperConfig (..)
     ) where
 
 import Data.IORef
 import Data.Text
 import Data.Map.Lazy as M
+import Data.Hiper.Types.Internal
+import Data.Hiper.Instances ()
 
 -- | Path to search for config files
 type Path = Text
@@ -24,12 +26,6 @@ data HiperConfig = HiperConfig {
   , hcDefaults :: M.Map Name Value
   }
 
--- | Values stored in the config
-data Value = Bool Bool
-           | String Text
-           | Number Rational
-           | List [Value]
-
 -- | Hiper
 data Hiper = Hiper {
     values :: IORef (M.Map Name Value)
@@ -45,5 +41,5 @@ loadConfig c = do
   -- check if there are ENV variables with the same names to take over defaults
   return $ Hiper mapIORef c
 
-getConfigValue :: Hiper -> Name -> Maybe Value
-getConfigValue = undefined
+lookup :: Hiper -> Name -> IO (Maybe Value)
+lookup = undefined

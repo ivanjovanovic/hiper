@@ -55,7 +55,6 @@ addDefault :: HiperConfig -> Name -> Value -> HiperConfig
 addDefault config name val =
   config {hcDefaults = M.insert name val (hcDefaults config)}
 
-
 -- | Hiper
 data Hiper = Hiper {
     values :: IORef (M.Map Name Value)
@@ -65,8 +64,7 @@ data Hiper = Hiper {
 -- | Take declaration of how config should be loaded and load it
 loadConfig :: HiperConfig -> IO Hiper
 loadConfig c = do
-  mapIORef <- newIORef M.empty
-  -- load IORef with the default values
+  mapIORef <- newIORef (hcDefaults c)
 
   -- check if there are ENV variables with the same names to take over defaults
   return $ Hiper mapIORef c

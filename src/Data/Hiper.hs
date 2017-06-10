@@ -1,9 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Data.Hiper
-    ( HiperConfig (..)
+    (
+      -- * Types
+      HiperConfig (..)
+    , Value(..) -- to be removed from interface
+
+      -- * configuration of the config loader
+    , emptyConfig
+    , addDefault
+
+      -- * config loader
     , loadConfig
     , lookup
-    , emptyConfig
     ) where
 
 import Data.IORef
@@ -38,6 +46,15 @@ emptyConfig = HiperConfig
   , hcExtensions = []
   , hcDefaults = M.empty
   }
+
+-- | TODO: Remove exposure of the internal value
+-- Currently you have to provide the Value so you have to know
+-- the internals. It should be possible to convert the provided
+-- value to internal representation.
+addDefault :: HiperConfig -> Name -> Value -> HiperConfig
+addDefault config name val =
+  config {hcDefaults = M.insert name val (hcDefaults config)}
+
 
 -- | Hiper
 data Hiper = Hiper {

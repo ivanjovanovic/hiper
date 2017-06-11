@@ -9,6 +9,9 @@ module Data.Hiper
     , emptyConfig
     , addDefault
 
+      -- * configuration properties
+    , configFilePath
+
       -- * config loader
     , loadConfig
     , lookup

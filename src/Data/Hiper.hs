@@ -52,7 +52,7 @@ emptyConfig :: HiperConfig
 emptyConfig = HiperConfig
   { hcPaths = []
   , hcFile = ""
-  , hcExtensions = ["json", "yaml"]
+  , hcExtensions = ["json"]
   , hcDefaults = M.empty
   }
 
@@ -73,12 +73,17 @@ data Hiper = Hiper {
 -- | Take declaration of how config should be loaded and load it
 loadConfig :: HiperConfig -> IO Hiper
 loadConfig c = do
-  mapIORef <- newIORef (hcDefaults c)
   -- Find configuration file from the configured paths
-
-
+  configFile <- configFilePath c
+  configFileMap <- case configFile of
+        Nothing -> return M.empty
+        Just f -> parseConfigFile f
+  mapIORef <- newIORef $ M.union configFileMap (hcDefaults c)
   -- check if there are ENV variables with the same names to take over defaults
   return $ Hiper mapIORef c
+
+parseConfigFile :: FilePath -> IO (M.Map Name Value)
+parseConfigFile f = return M.empty
 
 -- | lookup allows getting the value from the config registry.
 -- It lets the caller specify return type

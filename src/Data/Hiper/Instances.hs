@@ -9,6 +9,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as L
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LB
+import qualified Data.Scientific as Scientific
 
 instance Convertible Value where
   convert = Just
@@ -18,9 +19,10 @@ instance Convertible Bool where
   convert _ = Nothing
 
 convertNumberToNum :: (Num a) => Value -> Maybe a
-convertNumberToNum (Number r)
-  | denominator r == 1 = Just $ fromInteger $ numerator r
-convertNumberToNum _ = Nothing
+convertNumberToNum (Number r) =
+  case Scientific.floatingOrInteger r of
+    (Right i) -> Just $ fromIntegral i
+    _ -> Nothing
 
 instance Convertible Int where
   convert = convertNumberToNum
@@ -55,9 +57,11 @@ instance Convertible Word32 where
 instance Convertible Word64 where
     convert = convertNumberToNum
 
-convertNumberToFractional :: (Fractional a) => Value -> Maybe a
-convertNumberToFractional (Number r) = Just $ fromRational r
-convertNumberToFractional _ = Nothing
+convertNumberToFractional :: (RealFloat a) => Value -> Maybe a
+convertNumberToFractional (Number r) =
+    case Scientific.floatingOrInteger r of
+      (Left v) -> Just v
+      _ -> Nothing
 
 instance Convertible Double where
     convert = convertNumberToFractional

@@ -28,11 +28,11 @@ main = hspec $ do
       let config = emptyConfig
             { hcPaths = [pack "", pack "/tmp"]
             , hcFile = (pack "test")
-            , hcExtensions = [pack "json"]
+            , hcExtensions = [pack "yaml"]
             }
       configFile <- configFilePath config
       configFile `shouldBe` Nothing
       withFile "/tmp/test.json" WriteMode (\_ -> return ())
       foundConfigFile <- configFilePath config
-      foundConfigFile `shouldBe` Just "/tmp/test.json"
+      foundConfigFile `shouldBe` Just "/tmp/test.yaml"
       removeFile "/tmp/test.json"

@@ -18,12 +18,18 @@ module Data.Hiper
     ) where
 
 import System.Directory
+import System.IO hiding (FilePath)
 import Control.Monad
+import qualified Data.Yaml as Y
 import Data.IORef
+import qualified Data.Vector as V
 import Data.Text hiding (take)
+import qualified Data.ByteString as BS
 import Control.Monad (join)
-import Prelude hiding (lookup, concat, FilePath)
+import Prelude hiding (lookup, concat, FilePath, map)
 import qualified Data.Map.Lazy as M
+import qualified Data.List as L (map)
+import qualified Data.HashMap.Lazy as HM
 import Data.Hiper.Types.Internal
 import Data.Hiper.Instances ()
 
@@ -52,7 +58,7 @@ emptyConfig :: HiperConfig
 emptyConfig = HiperConfig
   { hcPaths = []
   , hcFile = ""
-  , hcExtensions = ["json"]
+  , hcExtensions = ["yaml"]
   , hcDefaults = M.empty
   }
 
@@ -78,12 +84,44 @@ loadConfig c = do
   configFileMap <- case configFile of
         Nothing -> return M.empty
         Just f -> parseConfigFile f
+
   mapIORef <- newIORef $ M.union configFileMap (hcDefaults c)
   -- check if there are ENV variables with the same names to take over defaults
   return $ Hiper mapIORef c
 
+-- | parseConfigFile parses provided file
 parseConfigFile :: FilePath -> IO (M.Map Name Value)
-parseConfigFile f = return M.empty
+parseConfigFile f = do
+  fileContents <- do withFile (unpack f) ReadMode (\h -> BS.hGetContents h)
+  return $ maybe M.empty foldValueToMap (Y.decode fileContents)
+
+-- | Given the root of the name, return map with all keys namespaced by the root.
+-- Namespacing is dot separated @root.name@
+namespaceMap :: Name -> M.Map Name a -> M.Map Name a
+namespaceMap name m = M.mapKeys (\key -> append (append name (pack ".")) key ) m
+
+
+foldValueToMap :: Y.Value -> M.Map Name Value
+foldValueToMap (Y.Object hm) = M.foldrWithKey f M.empty $ M.fromList (HM.toList hm)
+  where
+    f :: Name -> Y.Value -> M.Map Name Value -> M.Map Name Value
+    f k a result = M.union (parse k a) result
+
+    parse :: Name -> Y.Value -> M.Map Name Value
+    parse n o@(Y.Object hm) = namespaceMap n (foldValueToMap o)
+    parse n (Y.Array v) = case V.head v of
+      Y.Object _ -> M.empty
+      _ -> M.fromList [(n, List $ L.map convertValue (V.toList v))]
+    parse n (Y.String v) = M.fromList [(n, String v)]
+    parse n (Y.Number v) = M.fromList [(n, Number v)]
+    parse n (Y.Bool v) = M.fromList [(n, Bool v)]
+    parse n (Y.Null) = M.fromList [(n, Null)]
+
+convertValue :: Y.Value -> Value
+convertValue (Y.String v) = String v
+convertValue (Y.Number v) = Number v
+convertValue (Y.Bool v) = Bool v
+convertValue (Y.Null) = Null
 
 -- | lookup allows getting the value from the config registry.
 -- It lets the caller specify return type

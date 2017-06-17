@@ -3,6 +3,7 @@ module Main where
 
 import Test.Hspec
 import Data.Text
+import qualified Data.Map as M
 import System.Directory
 import System.IO
 import Prelude hiding (lookup)
@@ -32,7 +33,49 @@ main = hspec $ do
             }
       configFile <- configFilePath config
       configFile `shouldBe` Nothing
-      withFile "/tmp/test.json" WriteMode (\_ -> return ())
+      withFile "/tmp/test.yaml" WriteMode (\_ -> return ())
       foundConfigFile <- configFilePath config
       foundConfigFile `shouldBe` Just "/tmp/test.yaml"
-      removeFile "/tmp/test.json"
+      removeFile "/tmp/test.yaml"
+
+  describe "Yaml config parsing" $ do
+
+    it "Should properly flatten the config" $ do
+      let config = emptyConfig
+            { hcPaths = [pack "./test/files"]
+            , hcFile = (pack "test")
+            , hcExtensions = [pack "yml"]
+            }
+
+      hiper <- loadConfig config
+      firstLevel <- lookup hiper "firstLevel" :: IO (Maybe Int)
+      firstLevel `shouldBe` Just 1
+      secondLevel <- lookup hiper "second.level" :: IO (Maybe Int)
+      secondLevel `shouldBe` Just 2
+      thirdLevel <- lookup hiper "third.fourth.fifth" :: IO (Maybe Text)
+      thirdLevel `shouldBe` Just "test string"
+      arrayValue <- lookup hiper "sixt" :: IO (Maybe [Text])
+      arrayValue `shouldBe` Just ["one", "two", "three"]
+
+  describe "Default overloading" $ do
+    it "should take from defaults if not in the file" $ do
+      let config = emptyConfig
+            { hcPaths = [pack "./test/files"]
+            , hcFile = (pack "test")
+            , hcExtensions = [pack "yml"]
+            , hcDefaults = M.fromList [("seventh", Number 7)]
+            }
+      hiper <- loadConfig config
+      seventh <- lookup hiper "seventh" :: IO (Maybe Int)
+      seventh `shouldBe` Just 7
+
+    it "should override defaults when value is in the file" $ do
+      let config = emptyConfig
+            { hcPaths = [pack "./test/files"]
+            , hcFile = (pack "test")
+            , hcExtensions = [pack "yml"]
+            , hcDefaults = M.fromList [("firstLevel", Number 6)]
+            }
+      hiper <- loadConfig config
+      firstLevel <- lookup hiper "firstLevel" :: IO (Maybe Int)
+      firstLevel `shouldBe` Just 1

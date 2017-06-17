@@ -14,6 +14,9 @@ import qualified Data.Scientific as Scientific
 instance Convertible Value where
   convert = Just
 
+instance Convertible a => Convertible [a] where
+  convert = convertList
+
 instance Convertible Bool where
   convert (Bool v) = Just v
   convert _ = Nothing

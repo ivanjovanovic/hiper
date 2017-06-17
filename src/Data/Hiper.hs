@@ -110,7 +110,8 @@ foldValueToMap (Y.Object hm) = M.foldrWithKey f M.empty $ M.fromList (HM.toList 
     parse :: Name -> Y.Value -> M.Map Name Value
     parse n o@(Y.Object hm) = namespaceMap n (foldValueToMap o)
     parse n (Y.Array v) = case V.head v of
-      Y.Object _ -> M.empty
+      Y.Object _ -> M.empty -- will ignore array of objects
+      Y.Array _ -> M.empty -- will ignore array of arrays
       _ -> M.fromList [(n, List $ L.map convertValue (V.toList v))]
     parse n (Y.String v) = M.fromList [(n, String v)]
     parse n (Y.Number v) = M.fromList [(n, Number v)]

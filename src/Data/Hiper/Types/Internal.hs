@@ -18,3 +18,7 @@ data Value = Bool Bool
 
 class Convertible a where
   convert :: Value -> Maybe a
+
+  convertList :: Value -> Maybe [a]
+  convertList (List xs) = mapM convert xs
+  convertList _ = Nothing

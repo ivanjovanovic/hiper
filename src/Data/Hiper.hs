@@ -19,6 +19,7 @@ module Data.Hiper
 
 import System.Directory
 import System.IO hiding (FilePath)
+import System.Environment
 import Control.Monad
 import qualified Data.Yaml as Y
 import Data.IORef
@@ -30,8 +31,10 @@ import Prelude hiding (lookup, concat, FilePath, map)
 import qualified Data.Map.Lazy as M
 import qualified Data.List as L (map)
 import qualified Data.HashMap.Lazy as HM
+
 import Data.Hiper.Types.Internal
 import Data.Hiper.Instances ()
+import Data.Hiper.Parser
 
 -- | Path to search for config files
 type Path = Text
@@ -100,7 +103,6 @@ parseConfigFile f = do
 namespaceMap :: Name -> M.Map Name a -> M.Map Name a
 namespaceMap name m = M.mapKeys (\key -> append (append name (pack ".")) key ) m
 
-
 foldValueToMap :: Y.Value -> M.Map Name Value
 foldValueToMap (Y.Object hm) = M.foldrWithKey f M.empty $ M.fromList (HM.toList hm)
   where
@@ -127,9 +129,18 @@ convertValue (Y.Null) = Null
 -- | lookup allows getting the value from the config registry.
 -- It lets the caller specify return type
 lookup :: Convertible a => Hiper -> Name -> IO (Maybe a)
-lookup (Hiper values config) name = do
+lookup (Hiper values _) name = do
   valueMap <- readIORef values
-  return $ join $ fmap convert (M.lookup name valueMap)
+  -- check if there is ENV variable set for this configuration parameter
+  envValue <- fmap (maybe Nothing parseEnv)(lookupEnv (unpack name))
+  case envValue of
+    Nothing -> return $ join $ fmap convert (M.lookup name valueMap)
+    Just v -> return $ convert v
+
+parseEnv :: String -> Maybe Value
+parseEnv s = case parseEnvVal s of
+  Left err -> Nothing
+  Right val -> Just val
 
 -- | Searches for configuration files and returns path
 -- to the first one found according to configuration

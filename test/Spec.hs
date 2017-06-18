@@ -6,6 +6,7 @@ import Data.Text
 import qualified Data.Map as M
 import System.Directory
 import System.IO
+import System.Environment
 import Prelude hiding (lookup)
 
 import Data.Hiper
@@ -79,3 +80,18 @@ main = hspec $ do
       hiper <- loadConfig config
       firstLevel <- lookup hiper "firstLevel" :: IO (Maybe Int)
       firstLevel `shouldBe` Just 1
+
+    it "should override any when in ENV variable" $ do
+      let config = emptyConfig
+            { hcPaths = [pack "./test/files"]
+            , hcFile = (pack "test")
+            , hcExtensions = [pack "yml"]
+            , hcDefaults = M.fromList [("firstLevel", Number 6)]
+            }
+      hiper <- loadConfig config
+      setEnv "firstLevel" "true"
+      firstLevel <- lookup hiper "firstLevel" :: IO (Maybe Bool)
+      firstLevel `shouldBe` Just True
+      setEnv "second.level" "6"
+      secondLevel <- lookup hiper "second.level" :: IO (Maybe Int)
+      secondLevel `shouldBe` Just 6

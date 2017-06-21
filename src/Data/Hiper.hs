@@ -91,7 +91,7 @@ loadConfig c = do
 
   mapIORef <- newIORef $ M.union configFileMap (hcDefaults c)
   -- check if there are ENV variables with the same names to take over defaults
-  return $ Hiper mapIORef c
+  return $ Hiper {values = mapIORef, hcConfig = c}
 
 -- | parseConfigFile parses provided file
 parseConfigFile :: FilePath -> IO (M.Map Name Value)
@@ -111,7 +111,7 @@ foldValueToMap (Y.Object hm) = M.foldrWithKey f M.empty $ M.fromList (HM.toList 
     f k a result = M.union (parse k a) result
 
     parse :: Name -> Y.Value -> M.Map Name Value
-    parse n o@(Y.Object hm) = namespaceMap n (foldValueToMap o)
+    parse n o@(Y.Object _) = namespaceMap n (foldValueToMap o)
     parse n (Y.Array v) = case V.head v of
       Y.Object _ -> M.empty -- will ignore array of objects
       Y.Array _ -> M.empty -- will ignore array of arrays
@@ -120,18 +120,20 @@ foldValueToMap (Y.Object hm) = M.foldrWithKey f M.empty $ M.fromList (HM.toList 
     parse n (Y.Number v) = M.fromList [(n, Number v)]
     parse n (Y.Bool v) = M.fromList [(n, Bool v)]
     parse n (Y.Null) = M.fromList [(n, Null)]
+foldValueToMap _ = M.empty
 
 convertValue :: Y.Value -> Value
 convertValue (Y.String v) = String v
 convertValue (Y.Number v) = Number v
 convertValue (Y.Bool v) = Bool v
 convertValue (Y.Null) = Null
+convertValue _ = Null
 
 -- | lookup allows getting the value from the config registry.
 -- It lets the caller specify return type
 lookup :: Convertible a => Hiper -> Name -> IO (Maybe a)
-lookup (Hiper values _) name = do
-  valueMap <- readIORef values
+lookup hiper name = do
+  valueMap <- readIORef $ values hiper
   -- check if there is ENV variable set for this configuration parameter
   envValue <- fmap (maybe Nothing parseEnv)(lookupEnv (unpack name))
   case envValue of
@@ -140,7 +142,7 @@ lookup (Hiper values _) name = do
 
 parseEnv :: String -> Maybe Value
 parseEnv s = case parseEnvVal s of
-  Left err -> Nothing
+  Left _ -> Nothing
   Right val -> Just val
 
 -- | Searches for configuration files and returns path
@@ -155,6 +157,7 @@ configFilePath (HiperConfig paths file extensions _) = do
   case take 1 potentialFiles of
     [] -> return Nothing
     [f] -> return (Just f)
+    _ -> return Nothing
 
 filePaths :: [Path] -> [Extension] -> Name -> [FilePath]
 filePaths paths extensions name = do

@@ -73,6 +73,7 @@ addDefault :: HiperConfig -> Name -> Value -> HiperConfig
 addDefault config name val =
   config {hcDefaults = M.insert name val (hcDefaults config)}
 
+
 -- | Hiper
 data Hiper = Hiper {
     values :: IORef (M.Map Name Value)

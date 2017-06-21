@@ -1,8 +1,11 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
+
 module Data.Hiper.Instances () where
 
 import Data.Text.Encoding (encodeUtf8)
 import Data.Hiper.Types.Internal
-import Data.Ratio (Ratio, denominator, numerator)
 import Data.Int (Int8, Int16, Int32, Int64)
 import Data.Word (Word, Word8, Word16, Word32, Word64)
 import qualified Data.Text as T
@@ -26,6 +29,7 @@ convertNumberToNum (Number r) =
   case Scientific.floatingOrInteger r of
     (Right i) -> Just $ fromIntegral i
     _ -> Nothing
+convertNumberToNum _ = Nothing
 
 instance Convertible Int where
   convert = convertNumberToNum
@@ -65,6 +69,7 @@ convertNumberToFractional (Number r) =
     case Scientific.floatingOrInteger r of
       (Left v) -> Just v
       _ -> Nothing
+convertNumberToFractional _ = Nothing
 
 instance Convertible Double where
     convert = convertNumberToFractional

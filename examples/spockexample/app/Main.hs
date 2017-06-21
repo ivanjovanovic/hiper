@@ -18,9 +18,10 @@ main :: IO ()
 main = do
   hiper <- H.loadConfig hiperConfig
   port <- H.lookup hiper "port" :: IO (Maybe Int)
-  case port of
-    Nothing -> print "error starting, no port defined"
-    Just p -> do
+  maybe error run port
+  where
+    error = print "error starting, no port defined"
+    run p = do
       ref <- newIORef 0
       spockCfg <- defaultSpockCfg EmptySession PCNoDatabase (DummyAppState ref)
       runSpock p (spock spockCfg app)

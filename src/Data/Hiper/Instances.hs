@@ -8,21 +8,28 @@ import Data.Text.Encoding (encodeUtf8)
 import Data.Hiper.Types.Internal
 import Data.Int (Int8, Int16, Int32, Int64)
 import Data.Word (Word, Word8, Word16, Word32, Word64)
+import Foreign.C.Types (CDouble, CFloat)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as L
+import qualified Data.Text.Encoding as E
+import qualified Data.Text.Lazy.Encoding as LE
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Scientific as Scientific
 
-instance Convertible Value where
-  convert = Just
+instance  Convertible Value where
+  fromValue = Just
+  toValue = Just
 
 instance Convertible a => Convertible [a] where
-  convert = convertList
+  fromValue = fromValueList
+  toValue = toValueList
 
 instance Convertible Bool where
-  convert (Bool v) = Just v
-  convert _ = Nothing
+  fromValue (Bool v) = Just v
+  fromValue _ = Nothing
+
+  toValue x = Just (Bool x)
 
 convertNumberToNum :: (Num a) => Value -> Maybe a
 convertNumberToNum (Number r) =
@@ -31,38 +38,54 @@ convertNumberToNum (Number r) =
     _ -> Nothing
 convertNumberToNum _ = Nothing
 
+
+convertIntegralToNumber :: (Integral a) => a -> Maybe Value
+convertIntegralToNumber n = Just $ Number $ fromIntegral n
+
+
 instance Convertible Int where
-  convert = convertNumberToNum
+  fromValue = convertNumberToNum
+  toValue = convertIntegralToNumber
 
 instance Convertible Integer where
-  convert = convertNumberToNum
+  fromValue = convertNumberToNum
+  toValue = convertIntegralToNumber
 
 instance Convertible Int8 where
-    convert = convertNumberToNum
+    fromValue = convertNumberToNum
+    toValue = convertIntegralToNumber
 
 instance Convertible Int16 where
-    convert = convertNumberToNum
+    fromValue = convertNumberToNum
+    toValue = convertIntegralToNumber
 
 instance Convertible Int32 where
-    convert = convertNumberToNum
+    fromValue = convertNumberToNum
+    toValue = convertIntegralToNumber
 
 instance Convertible Int64 where
-    convert = convertNumberToNum
+    fromValue = convertNumberToNum
+    toValue = convertIntegralToNumber
 
 instance Convertible Word where
-    convert = convertNumberToNum
+    fromValue = convertNumberToNum
+    toValue = convertIntegralToNumber
 
 instance Convertible Word8 where
-    convert = convertNumberToNum
+    fromValue = convertNumberToNum
+    toValue = convertIntegralToNumber
 
 instance Convertible Word16 where
-    convert = convertNumberToNum
+    fromValue = convertNumberToNum
+    toValue = convertIntegralToNumber
 
 instance Convertible Word32 where
-    convert = convertNumberToNum
+    fromValue = convertNumberToNum
+    toValue = convertIntegralToNumber
 
 instance Convertible Word64 where
-    convert = convertNumberToNum
+    fromValue = convertNumberToNum
+    toValue = convertIntegralToNumber
 
 convertNumberToFractional :: (RealFloat a) => Value -> Maybe a
 convertNumberToFractional (Number r) =
@@ -71,17 +94,27 @@ convertNumberToFractional (Number r) =
       _ -> Nothing
 convertNumberToFractional _ = Nothing
 
+convertFractionalToNumber :: (RealFloat a) => a -> Maybe Value
+convertFractionalToNumber f =
+  let (c, e) = decodeFloat f
+  in Just $ Number $ fromInteger c * 10 ^^ e
+
+
 instance Convertible Double where
-    convert = convertNumberToFractional
+    fromValue = convertNumberToFractional
+    toValue = convertFractionalToNumber
 
 instance Convertible Float where
-    convert = convertNumberToFractional
+    fromValue = convertNumberToFractional
+    toValue = convertFractionalToNumber
 
--- instance Convertible CDouble where
---     convert = convertNumberToFractional
+instance Convertible CDouble where
+    fromValue = convertNumberToFractional
+    toValue = convertFractionalToNumber
 
--- instance Convertible CFloat where
---     convert = convertNumberToFractional
+instance Convertible CFloat where
+    fromValue = convertNumberToFractional
+    toValue = convertFractionalToNumber
 
 -- instance Integral a => Convertible (Ratio a) where
 --     convert = convertNumberToFractional
@@ -93,18 +126,28 @@ instance Convertible Float where
 --     convert = convertNumberToFractional
 
 instance Convertible T.Text where
-  convert (String t) = Just t
-  convert _ = Nothing
+  fromValue (String t) = Just t
+  fromValue _ = Nothing
+
+  toValue t = Just $ String t
 
 instance Convertible Char where
-  convert (String t) | T.length t == 1 = Just $ T.head t
-  convert _ = Nothing
+  fromValue (String t) | T.length t == 1 = Just $ T.head t
+  fromValue _ = Nothing
+
+  toValue t = Just $ String $ T.pack [t]
 
 instance Convertible L.Text where
-  convert = fmap L.fromStrict . convert
+  fromValue = fmap L.fromStrict . fromValue
+
+  toValue lt = Just $ String $ L.toStrict lt
 
 instance Convertible B.ByteString where
-  convert = fmap encodeUtf8 . convert
+  fromValue = fmap encodeUtf8 . fromValue
+
+  toValue bs = Just $ String $ E.decodeUtf8 bs
 
 instance Convertible LB.ByteString where
-  convert = fmap (LB.fromChunks . (:[])) . convert
+  fromValue = fmap (LB.fromChunks . (:[])) . fromValue
+
+  toValue lbs = Just $ String $ L.toStrict $ LE.decodeUtf8 lbs

@@ -69,10 +69,11 @@ emptyConfig = HiperConfig
 -- Currently you have to provide the Value so you have to know
 -- the internals. It should be possible to convert the provided
 -- value to internal representation.
-addDefault :: HiperConfig -> Name -> Value -> HiperConfig
+addDefault :: Convertible a => HiperConfig -> Name -> a -> Maybe HiperConfig
 addDefault config name val =
-  config {hcDefaults = M.insert name val (hcDefaults config)}
-
+  case toValue val of
+    Just v ->  Just $ config {hcDefaults = M.insert name v (hcDefaults config)}
+    _ -> Nothing
 
 -- | Hiper
 data Hiper = Hiper {
@@ -137,8 +138,8 @@ lookup hiper name = do
   -- check if there is ENV variable set for this configuration parameter
   envValue <- fmap (maybe Nothing parseEnv)(lookupEnv (unpack name))
   case envValue of
-    Nothing -> return $ join $ fmap convert (M.lookup name valueMap)
-    Just v -> return $ convert v
+    Nothing -> return $ join $ fmap fromValue (M.lookup name valueMap)
+    Just v -> return $ fromValue v
 
 parseEnv :: String -> Maybe Value
 parseEnv s = case parseEnvVal s of

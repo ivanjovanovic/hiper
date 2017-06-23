@@ -17,8 +17,14 @@ data Value = Bool Bool
 
 
 class Convertible a where
-  convert :: Value -> Maybe a
+  fromValue :: Value -> Maybe a
+  toValue :: a -> Maybe Value
 
-  convertList :: Value -> Maybe [a]
-  convertList (List xs) = mapM convert xs
-  convertList _ = Nothing
+  fromValueList :: Value -> Maybe [a]
+  fromValueList (List xs) = mapM fromValue xs
+  fromValueList _ = Nothing
+
+  toValueList :: [a] -> Maybe Value
+  toValueList xs = case mapM toValue xs of
+    Just vs -> Just (List vs)
+    _ -> Nothing

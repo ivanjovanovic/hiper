@@ -3,6 +3,7 @@ module Data.Hiper
     (
       -- * Types
       HiperConfig (..)
+    , Hiper (..)
 
       -- * configuration of the config loader
     , emptyConfig
@@ -19,7 +20,10 @@ module Data.Hiper
 import System.Directory
 import System.IO hiding (FilePath)
 import System.Environment
+import System.FSNotify
+import System.FilePath.Posix hiding (FilePath)
 import Control.Monad
+import Control.Concurrent
 import qualified Data.Yaml as Y
 import Data.IORef
 import qualified Data.Vector as V
@@ -64,9 +68,6 @@ emptyConfig = HiperConfig
   , hcDefaults = M.empty
   }
 
--- | TODO: Remove exposure of the internal value
--- Currently you have to provide the Value so you have to know
--- the internals. It should be possible to convert the provided
 -- value to internal representation.
 addDefault :: Configurable a => HiperConfig -> Name -> a -> Maybe HiperConfig
 addDefault config name val =
@@ -75,7 +76,7 @@ addDefault config name val =
     _ -> Nothing
 
 -- | Hiper
-data Hiper = Hiper {
+data Hiper = H {
     values :: IORef (M.Map Name Value)
   , hcConfig :: HiperConfig
   }
@@ -90,8 +91,11 @@ loadConfig c = do
         Just f -> parseConfigFile f
 
   mapIORef <- newIORef $ M.union configFileMap (hcDefaults c)
-  -- check if there are ENV variables with the same names to take over defaults
-  return $ Hiper {values = mapIORef, hcConfig = c}
+  -- start thread watching for changes in the files
+  let hiper = H {values = mapIORef, hcConfig = c}
+
+  _ <- forkIO (watchForChanges hiper)
+  return $ hiper
 
 -- | parseConfigFile parses provided file
 parseConfigFile :: FilePath -> IO (M.Map Name Value)
@@ -164,3 +168,31 @@ filePaths paths extensions name = do
   path <- paths
   extension <- extensions
   return $ concat [path, pack "/", name, pack ".", extension]
+
+watchForChanges :: Hiper -> IO ()
+watchForChanges h = withManager $ \mgr -> do
+  configFile <- configFilePath $ hcConfig h
+  let dir = case configFile of
+        Just f -> f
+        Nothing -> pack "."
+
+  putStrLn $ "watching dir" ++ (show $ takeDirectory $ unpack dir)
+
+  _ <- watchDir
+    mgr
+    (takeDirectory $ unpack dir)
+    (const True)
+    (reloadFromFile h)
+
+  forever $ threadDelay 1000000
+
+reloadFromFile :: Hiper -> Action
+reloadFromFile h = \_ -> do
+  putStrLn "Reloading configuration"
+  -- Find configuration file from the configured paths
+  configFile <- configFilePath $ hcConfig h
+  configFileMap <- case configFile of
+    Nothing -> return M.empty
+    Just f -> parseConfigFile f
+
+  atomicModifyIORef' (values h) $ \existingMap -> (M.union configFileMap existingMap, ())

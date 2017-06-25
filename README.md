@@ -1,4 +1,4 @@
-# Hiper - Viper insired configuration Haskell library
+# Hiper - Viper inspired configuration library for Haskell
 
 ## Requirements
 
@@ -11,15 +11,9 @@
 * Client can define config type to be read adding type safety to the config
 * Client can define which locations should be checked to parse additional configuration
 
-## Source of configiration config
-* Instance of the type should be provided as defaults.
-* Instance of the Hiper
-
 ## Design
 
 * Intermediate representation for writing to and reading from in a type safe way.
-* Example is deiko-config that parses HOCON. Here other formats should be parsed.
-
 
 ## Resources
 

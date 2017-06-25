@@ -17,10 +17,11 @@ library
   hs-source-dirs:      src
   exposed-modules:
                   Data.Hiper
+                  Data.Hiper.Types
   other-modules:
                 Data.Hiper.Instances
-                Data.Hiper.Types.Internal
                 Data.Hiper.Parser
+                Data.Hiper.Types.Internal
 
   build-depends:       base >= 4.7 && < 5
                      , mtl >= 2.2 && < 2.3

@@ -1,6 +1,6 @@
 module Data.Hiper.Types.Internal
        (
-         Convertible(..)
+         Configurable(..)
        , Value(..)
        ) where
 
@@ -16,7 +16,7 @@ data Value = Bool Bool
              deriving (Show)
 
 
-class Convertible a where
+class Configurable a where
   fromValue :: Value -> Maybe a
   toValue :: a -> Maybe Value
 

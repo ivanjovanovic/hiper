@@ -3,7 +3,6 @@ module Data.Hiper
     (
       -- * Types
       HiperConfig (..)
-    , Value(..) -- to be removed from interface
 
       -- * configuration of the config loader
     , emptyConfig
@@ -69,7 +68,7 @@ emptyConfig = HiperConfig
 -- Currently you have to provide the Value so you have to know
 -- the internals. It should be possible to convert the provided
 -- value to internal representation.
-addDefault :: Convertible a => HiperConfig -> Name -> a -> Maybe HiperConfig
+addDefault :: Configurable a => HiperConfig -> Name -> a -> Maybe HiperConfig
 addDefault config name val =
   case toValue val of
     Just v ->  Just $ config {hcDefaults = M.insert name v (hcDefaults config)}
@@ -132,7 +131,7 @@ convertValue _ = Null
 
 -- | lookup allows getting the value from the config registry.
 -- It lets the caller specify return type
-lookup :: Convertible a => Hiper -> Name -> IO (Maybe a)
+lookup :: Configurable a => Hiper -> Name -> IO (Maybe a)
 lookup hiper name = do
   valueMap <- readIORef $ values hiper
   -- check if there is ENV variable set for this configuration parameter

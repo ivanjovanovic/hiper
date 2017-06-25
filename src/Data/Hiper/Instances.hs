@@ -17,15 +17,15 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Scientific as Scientific
 
-instance  Convertible Value where
+instance  Configurable Value where
   fromValue = Just
   toValue = Just
 
-instance Convertible a => Convertible [a] where
+instance Configurable a => Configurable [a] where
   fromValue = fromValueList
   toValue = toValueList
 
-instance Convertible Bool where
+instance Configurable Bool where
   fromValue (Bool v) = Just v
   fromValue _ = Nothing
 
@@ -43,47 +43,47 @@ convertIntegralToNumber :: (Integral a) => a -> Maybe Value
 convertIntegralToNumber n = Just $ Number $ fromIntegral n
 
 
-instance Convertible Int where
+instance Configurable Int where
   fromValue = convertNumberToNum
   toValue = convertIntegralToNumber
 
-instance Convertible Integer where
+instance Configurable Integer where
   fromValue = convertNumberToNum
   toValue = convertIntegralToNumber
 
-instance Convertible Int8 where
+instance Configurable Int8 where
     fromValue = convertNumberToNum
     toValue = convertIntegralToNumber
 
-instance Convertible Int16 where
+instance Configurable Int16 where
     fromValue = convertNumberToNum
     toValue = convertIntegralToNumber
 
-instance Convertible Int32 where
+instance Configurable Int32 where
     fromValue = convertNumberToNum
     toValue = convertIntegralToNumber
 
-instance Convertible Int64 where
+instance Configurable Int64 where
     fromValue = convertNumberToNum
     toValue = convertIntegralToNumber
 
-instance Convertible Word where
+instance Configurable Word where
     fromValue = convertNumberToNum
     toValue = convertIntegralToNumber
 
-instance Convertible Word8 where
+instance Configurable Word8 where
     fromValue = convertNumberToNum
     toValue = convertIntegralToNumber
 
-instance Convertible Word16 where
+instance Configurable Word16 where
     fromValue = convertNumberToNum
     toValue = convertIntegralToNumber
 
-instance Convertible Word32 where
+instance Configurable Word32 where
     fromValue = convertNumberToNum
     toValue = convertIntegralToNumber
 
-instance Convertible Word64 where
+instance Configurable Word64 where
     fromValue = convertNumberToNum
     toValue = convertIntegralToNumber
 
@@ -100,54 +100,54 @@ convertFractionalToNumber f =
   in Just $ Number $ fromInteger c * 10 ^^ e
 
 
-instance Convertible Double where
+instance Configurable Double where
     fromValue = convertNumberToFractional
     toValue = convertFractionalToNumber
 
-instance Convertible Float where
+instance Configurable Float where
     fromValue = convertNumberToFractional
     toValue = convertFractionalToNumber
 
-instance Convertible CDouble where
+instance Configurable CDouble where
     fromValue = convertNumberToFractional
     toValue = convertFractionalToNumber
 
-instance Convertible CFloat where
+instance Configurable CFloat where
     fromValue = convertNumberToFractional
     toValue = convertFractionalToNumber
 
--- instance Integral a => Convertible (Ratio a) where
+-- instance Integral a => Configurable (Ratio a) where
 --     convert = convertNumberToFractional
 
--- instance RealFloat a => Convertible (Complex a) where
+-- instance RealFloat a => Configurable (Complex a) where
 --     convert = convertNumberToFractional
 
--- instance HasResolution a => Convertible (Fixed a) where
+-- instance HasResolution a => Configurable (Fixed a) where
 --     convert = convertNumberToFractional
 
-instance Convertible T.Text where
+instance Configurable T.Text where
   fromValue (String t) = Just t
   fromValue _ = Nothing
 
   toValue t = Just $ String t
 
-instance Convertible Char where
+instance Configurable Char where
   fromValue (String t) | T.length t == 1 = Just $ T.head t
   fromValue _ = Nothing
 
   toValue t = Just $ String $ T.pack [t]
 
-instance Convertible L.Text where
+instance Configurable L.Text where
   fromValue = fmap L.fromStrict . fromValue
 
   toValue lt = Just $ String $ L.toStrict lt
 
-instance Convertible B.ByteString where
+instance Configurable B.ByteString where
   fromValue = fmap encodeUtf8 . fromValue
 
   toValue bs = Just $ String $ E.decodeUtf8 bs
 
-instance Convertible LB.ByteString where
+instance Configurable LB.ByteString where
   fromValue = fmap (LB.fromChunks . (:[])) . fromValue
 
   toValue lbs = Just $ String $ L.toStrict $ LE.decodeUtf8 lbs

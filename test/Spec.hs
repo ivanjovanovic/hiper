@@ -10,6 +10,7 @@ import System.Environment
 import Prelude hiding (lookup)
 
 import Data.Hiper
+import Data.Hiper.Types
 
 main :: IO ()
 main = hspec $ do
@@ -20,7 +21,7 @@ main = hspec $ do
       val `shouldBe` Nothing
 
     it "returns defaults when no other config present" $ do
-      let config = addDefault emptyConfig "test" (Bool True)
+      let Just config = addDefault emptyConfig "test" True
       hiper <- loadConfig config
       val <- lookup hiper "test" :: IO (Maybe Bool)
       val `shouldBe` Just True

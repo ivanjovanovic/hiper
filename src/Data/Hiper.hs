@@ -159,7 +159,6 @@ configFilePath (HiperConfig _ _ [] _) = return Nothing
 configFilePath (HiperConfig paths file extensions _) = do
   potentialFiles <- filterM (doesFileExist . unpack) (filePaths paths extensions file)
   case take 1 potentialFiles of
-    [] -> return Nothing
     [f] -> return (Just f)
     _ -> return Nothing
 
@@ -176,9 +175,9 @@ watchForChanges h = withManager $ \mgr -> do
         Just f -> f
         Nothing -> pack "."
 
-  putStrLn $ "watching dir" ++ (show $ takeDirectory $ unpack dir)
+  putStrLn $ "watching dir: " ++ (show $ takeDirectory $ unpack dir)
 
-  _ <- watchDir
+  void $ watchDir
     mgr
     (takeDirectory $ unpack dir)
     (const True)

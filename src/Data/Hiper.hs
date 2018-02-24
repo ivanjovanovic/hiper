@@ -23,13 +23,11 @@ import           Control.Monad             (join)
 import qualified Data.ByteString           as BS
 import qualified Data.HashMap.Lazy         as HM
 import           Data.IORef
-import qualified Data.List                 as L (map)
 import qualified Data.Map.Lazy             as M
 import           Data.Text                 hiding (take)
 import qualified Data.Vector               as V
 import qualified Data.Yaml                 as Y
-import           Prelude                   hiding (FilePath, concat, lookup,
-                                            map)
+import           Prelude                   hiding (FilePath, concat, lookup)
 import           System.Directory
 import           System.Environment
 import           System.FilePath.Posix     hiding (FilePath)
@@ -120,7 +118,7 @@ foldValueToMap (Y.Object hm) = M.foldrWithKey f M.empty $ M.fromList (HM.toList 
     parse n (Y.Array v) = case V.head v of
       Y.Object _ -> M.empty -- will ignore array of objects
       Y.Array _  -> M.empty -- will ignore array of arrays
-      _          -> M.fromList [(n, List $ L.map convertValue (V.toList v))]
+      _          -> M.fromList [(n, List $ fmap convertValue (V.toList v))]
     parse n (Y.String v) = M.fromList [(n, String v)]
     parse n (Y.Number v) = M.fromList [(n, Number v)]
     parse n (Y.Bool v) = M.fromList [(n, Bool v)]

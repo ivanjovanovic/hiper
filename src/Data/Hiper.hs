@@ -37,7 +37,7 @@ import qualified Data.HashMap.Lazy as HM
 
 import Data.Hiper.Types.Internal
 import Data.Hiper.Instances ()
-import Data.Hiper.Parser
+import Data.Hiper.Parser 
 
 -- | Path to search for config files
 type Path = Text
@@ -106,7 +106,7 @@ parseConfigFile f = do
 -- | Given the root of the name, return map with all keys namespaced by the root.
 -- Namespacing is dot separated @root.name@
 namespaceMap :: Name -> M.Map Name a -> M.Map Name a
-namespaceMap name m = M.mapKeys (\key -> append (append name (pack ".")) key ) m
+namespaceMap name m = M.mapKeys (\key -> append (append name ".") key ) m
 
 foldValueToMap :: Y.Value -> M.Map Name Value
 foldValueToMap (Y.Object hm) = M.foldrWithKey f M.empty $ M.fromList (HM.toList hm)
@@ -166,14 +166,14 @@ filePaths :: [Path] -> [Extension] -> Name -> [FilePath]
 filePaths paths extensions name = do
   path <- paths
   extension <- extensions
-  return $ concat [path, pack "/", name, pack ".", extension]
+  return $ concat [path, "/", name, ".", extension]
 
 watchForChanges :: Hiper -> IO ()
 watchForChanges h = withManager $ \mgr -> do
   configFile <- configFilePath $ hcConfig h
   let dir = case configFile of
         Just f -> f
-        Nothing -> pack "."
+        Nothing ->  "."
 
   putStrLn $ "watching dir: " ++ (show $ takeDirectory $ unpack dir)
 

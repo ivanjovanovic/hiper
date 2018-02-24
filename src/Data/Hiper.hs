@@ -24,6 +24,7 @@ import qualified Data.ByteString           as BS
 import qualified Data.HashMap.Lazy         as HM
 import           Data.IORef
 import qualified Data.Map.Lazy             as M
+import           Data.Maybe                (listToMaybe)
 import           Data.Text                 hiding (take)
 import qualified Data.Vector               as V
 import qualified Data.Yaml                 as Y
@@ -156,10 +157,7 @@ configFilePath (HiperConfig [] _ _ _) = return Nothing
 configFilePath (HiperConfig _"" _ _) = return Nothing
 configFilePath (HiperConfig _ _ [] _) = return Nothing
 configFilePath (HiperConfig paths file extensions _) = do
-  potentialFiles <- filterM (doesFileExist . unpack) (filePaths paths extensions file)
-  case take 1 potentialFiles of
-    [f] -> return (Just f)
-    _   -> return Nothing
+  listToMaybe <$> filterM (doesFileExist . unpack) (filePaths paths extensions file)
 
 filePaths :: [Path] -> [Extension] -> Name -> [FilePath]
 filePaths paths extensions name = do

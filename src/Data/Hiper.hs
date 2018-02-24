@@ -17,27 +17,28 @@ module Data.Hiper
     , lookup
     ) where
 
-import System.Directory
-import System.IO hiding (FilePath)
-import System.Environment
-import System.FSNotify
-import System.FilePath.Posix hiding (FilePath)
-import Control.Monad
-import Control.Concurrent
-import qualified Data.Yaml as Y
-import Data.IORef
-import qualified Data.Vector as V
-import Data.Text hiding (take)
-import qualified Data.ByteString as BS
-import Control.Monad (join)
-import Prelude hiding (lookup, concat, FilePath, map)
-import qualified Data.Map.Lazy as M
-import qualified Data.List as L (map)
-import qualified Data.HashMap.Lazy as HM
+import           Control.Concurrent
+import           Control.Monad
+import           Control.Monad             (join)
+import qualified Data.ByteString           as BS
+import qualified Data.HashMap.Lazy         as HM
+import           Data.IORef
+import qualified Data.List                 as L (map)
+import qualified Data.Map.Lazy             as M
+import           Data.Text                 hiding (take)
+import qualified Data.Vector               as V
+import qualified Data.Yaml                 as Y
+import           Prelude                   hiding (FilePath, concat, lookup,
+                                            map)
+import           System.Directory
+import           System.Environment
+import           System.FilePath.Posix     hiding (FilePath)
+import           System.FSNotify
+import           System.IO                 hiding (FilePath)
 
-import Data.Hiper.Types.Internal
-import Data.Hiper.Instances ()
-import Data.Hiper.Parser 
+import           Data.Hiper.Instances      ()
+import           Data.Hiper.Parser
+import           Data.Hiper.Types.Internal
 
 -- | Path to search for config files
 type Path = Text
@@ -52,10 +53,10 @@ type FilePath = Text
 
 -- | Hiper configuration
 data HiperConfig = HiperConfig {
-    hcPaths :: [Path]
-  , hcFile :: Name
+    hcPaths      :: [Path]
+  , hcFile       :: Name
   , hcExtensions :: [Extension]
-  , hcDefaults :: M.Map Name Value
+  , hcDefaults   :: M.Map Name Value
   }
 
 -- | Provides an empty config to build on top.
@@ -77,7 +78,7 @@ addDefault config name val =
 
 -- | Hiper
 data Hiper = H {
-    values :: IORef (M.Map Name Value)
+    values   :: IORef (M.Map Name Value)
   , hcConfig :: HiperConfig
   }
 
@@ -88,7 +89,7 @@ loadConfig c = do
   configFile <- configFilePath c
   configFileMap <- case configFile of
         Nothing -> return M.empty
-        Just f -> parseConfigFile f
+        Just f  -> parseConfigFile f
 
   mapIORef <- newIORef $ M.union configFileMap (hcDefaults c)
   -- start thread watching for changes in the files
@@ -118,8 +119,8 @@ foldValueToMap (Y.Object hm) = M.foldrWithKey f M.empty $ M.fromList (HM.toList 
     parse n o@(Y.Object _) = namespaceMap n (foldValueToMap o)
     parse n (Y.Array v) = case V.head v of
       Y.Object _ -> M.empty -- will ignore array of objects
-      Y.Array _ -> M.empty -- will ignore array of arrays
-      _ -> M.fromList [(n, List $ L.map convertValue (V.toList v))]
+      Y.Array _  -> M.empty -- will ignore array of arrays
+      _          -> M.fromList [(n, List $ L.map convertValue (V.toList v))]
     parse n (Y.String v) = M.fromList [(n, String v)]
     parse n (Y.Number v) = M.fromList [(n, Number v)]
     parse n (Y.Bool v) = M.fromList [(n, Bool v)]
@@ -129,9 +130,9 @@ foldValueToMap _ = M.empty
 convertValue :: Y.Value -> Value
 convertValue (Y.String v) = String v
 convertValue (Y.Number v) = Number v
-convertValue (Y.Bool v) = Bool v
-convertValue (Y.Null) = Null
-convertValue _ = Null
+convertValue (Y.Bool v)   = Bool v
+convertValue (Y.Null)     = Null
+convertValue _            = Null
 
 -- | lookup allows getting the value from the config registry.
 -- It lets the caller specify return type
@@ -142,11 +143,11 @@ lookup hiper name = do
   envValue <- fmap (maybe Nothing parseEnv)(lookupEnv (unpack name))
   case envValue of
     Nothing -> return $ join $ fmap fromValue (M.lookup name valueMap)
-    Just v -> return $ fromValue v
+    Just v  -> return $ fromValue v
 
 parseEnv :: String -> Maybe Value
 parseEnv s = case parseEnvVal s of
-  Left _ -> Nothing
+  Left _    -> Nothing
   Right val -> Just val
 
 -- | Searches for configuration files and returns path
@@ -160,7 +161,7 @@ configFilePath (HiperConfig paths file extensions _) = do
   potentialFiles <- filterM (doesFileExist . unpack) (filePaths paths extensions file)
   case take 1 potentialFiles of
     [f] -> return (Just f)
-    _ -> return Nothing
+    _   -> return Nothing
 
 filePaths :: [Path] -> [Extension] -> Name -> [FilePath]
 filePaths paths extensions name = do
@@ -172,7 +173,7 @@ watchForChanges :: Hiper -> IO ()
 watchForChanges h = withManager $ \mgr -> do
   configFile <- configFilePath $ hcConfig h
   let dir = case configFile of
-        Just f -> f
+        Just f  -> f
         Nothing ->  "."
 
   putStrLn $ "watching dir: " ++ (show $ takeDirectory $ unpack dir)
@@ -192,6 +193,6 @@ reloadFromFile h = \_ -> do
   configFile <- configFilePath $ hcConfig h
   configFileMap <- case configFile of
     Nothing -> return M.empty
-    Just f -> parseConfigFile f
+    Just f  -> parseConfigFile f
 
   atomicModifyIORef' (values h) $ \existingMap -> (M.union configFileMap existingMap, ())

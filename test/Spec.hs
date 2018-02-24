@@ -29,9 +29,9 @@ main = hspec $ do
   describe "Config file selection" $ do
     it "selects first config file found in provided config" $ do
       let config = emptyConfig
-            { hcPaths = [pack "", pack "/tmp"]
-            , hcFile = (pack "test")
-            , hcExtensions = [pack "yaml"]
+            { hcPaths = ["", "/tmp"]
+            , hcFile = "test"
+            , hcExtensions = ["yaml"]
             }
       configFile <- configFilePath config
       configFile `shouldBe` Nothing
@@ -44,9 +44,9 @@ main = hspec $ do
 
     it "Should properly flatten the config" $ do
       let config = emptyConfig
-            { hcPaths = [pack "./test/files"]
-            , hcFile = (pack "test")
-            , hcExtensions = [pack "yml"]
+            { hcPaths = ["./test/files"]
+            , hcFile = "test"
+            , hcExtensions = ["yml"]
             }
 
       hiper <- loadConfig config
@@ -62,9 +62,9 @@ main = hspec $ do
   describe "Default overloading" $ do
     it "should take from defaults if not in the file" $ do
       let config = emptyConfig
-            { hcPaths = [pack "./test/files"]
-            , hcFile = (pack "test")
-            , hcExtensions = [pack "yml"]
+            { hcPaths = ["./test/files"]
+            , hcFile = "test"
+            , hcExtensions = ["yml"]
             , hcDefaults = M.fromList [("seventh", Number 7)]
             }
       hiper <- loadConfig config
@@ -73,9 +73,9 @@ main = hspec $ do
 
     it "should override defaults when value is in the file" $ do
       let config = emptyConfig
-            { hcPaths = [pack "./test/files"]
-            , hcFile = (pack "test")
-            , hcExtensions = [pack "yml"]
+            { hcPaths = ["./test/files"]
+            , hcFile = "test"
+            , hcExtensions = ["yml"]
             , hcDefaults = M.fromList [("firstLevel", Number 6)]
             }
       hiper <- loadConfig config
@@ -84,9 +84,9 @@ main = hspec $ do
 
     it "should override any when in ENV variable" $ do
       let config = emptyConfig
-            { hcPaths = [pack "./test/files"]
-            , hcFile = (pack "test")
-            , hcExtensions = [pack "yml"]
+            { hcPaths = ["./test/files"]
+            , hcFile = "test"
+            , hcExtensions = ["yml"]
             , hcDefaults = M.fromList [("firstLevel", Number 6)]
             }
       hiper <- loadConfig config

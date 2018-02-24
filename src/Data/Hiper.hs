@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
 module Data.Hiper
     (
       -- * Types
@@ -28,10 +29,10 @@ import           Data.Maybe                (listToMaybe)
 import           Data.Text                 hiding (take)
 import qualified Data.Vector               as V
 import qualified Data.Yaml                 as Y
-import           Prelude                   hiding (FilePath, concat, lookup)
+import           Prelude                   hiding (concat, lookup)
 import           System.Directory
 import           System.Environment
-import           System.FilePath.Posix     hiding (FilePath)
+import           System.FilePath
 import           System.FSNotify
 import           System.IO                 hiding (FilePath)
 
@@ -39,22 +40,13 @@ import           Data.Hiper.Instances      ()
 import           Data.Hiper.Parser
 import           Data.Hiper.Types.Internal
 
--- | Path to search for config files
-type Path = Text
-
--- | Name of a config value
 type Name = Text
-
--- | Extension of the config file
-type Extension = Text
-
-type FilePath = Text
 
 -- | Hiper configuration
 data HiperConfig = HiperConfig {
-    hcPaths      :: [Path]
-  , hcFile       :: Name
-  , hcExtensions :: [Extension]
+    hcPaths      :: [FilePath]
+  , hcFile       :: String
+  , hcExtensions :: [String]
   , hcDefaults   :: M.Map Name Value
   }
 
@@ -100,7 +92,7 @@ loadConfig c = do
 -- | parseConfigFile parses provided file
 parseConfigFile :: FilePath -> IO (M.Map Name Value)
 parseConfigFile f = do
-  fileContents <- do withFile (unpack f) ReadMode (\h -> BS.hGetContents h)
+  fileContents <- do withFile f ReadMode (\h -> BS.hGetContents h)
   return $ maybe M.empty foldValueToMap (Y.decode fileContents)
 
 -- | Given the root of the name, return map with all keys namespaced by the root.
@@ -157,26 +149,26 @@ configFilePath (HiperConfig [] _ _ _) = return Nothing
 configFilePath (HiperConfig _"" _ _) = return Nothing
 configFilePath (HiperConfig _ _ [] _) = return Nothing
 configFilePath (HiperConfig paths file extensions _) = do
-  listToMaybe <$> filterM (doesFileExist . unpack) (filePaths paths extensions file)
+  listToMaybe <$> filterM doesFileExist (filePaths paths extensions file)
 
-filePaths :: [Path] -> [Extension] -> Name -> [FilePath]
+filePaths :: [String] -> [String] -> String -> [FilePath]
 filePaths paths extensions name = do
   path <- paths
   extension <- extensions
-  return $ concat [path, "/", name, ".", extension]
+  return $ path </> name <.> extension
 
 watchForChanges :: Hiper -> IO ()
 watchForChanges h = withManager $ \mgr -> do
   configFile <- configFilePath $ hcConfig h
-  let dir = case configFile of
+  let file = case configFile of
         Just f  -> f
         Nothing ->  "."
 
-  putStrLn $ "watching dir: " ++ (show $ takeDirectory $ unpack dir)
+  putStrLn $ "watching dir: " ++ (show $ takeDirectory file)
 
   void $ watchDir
     mgr
-    (takeDirectory $ unpack dir)
+    (takeDirectory file)
     (const True)
     (reloadFromFile h)
 

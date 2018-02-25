@@ -96,3 +96,13 @@ main = hspec $ do
       setEnv "second.level" "6"
       secondLevel <- lookup hiper "second.level" :: IO (Maybe Int)
       secondLevel `shouldBe` Just 6
+
+  describe "Config reloading" $ do
+
+    it "should by default not start reloading thread" $ do
+      hiper <- loadConfig emptyConfig
+      threadId hiper `shouldBe` Nothing
+
+    it "should start reloading thread when configured" $ do
+      hiper <- loadConfig $ emptyConfig { hcReload = True }
+      threadId hiper `shouldNotBe` Nothing

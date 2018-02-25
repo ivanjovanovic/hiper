@@ -47,6 +47,7 @@ data HiperConfig = HiperConfig {
     hcPaths      :: [FilePath]
   , hcFile       :: String
   , hcExtensions :: [String]
+  , hcReload     :: Bool
   , hcDefaults   :: M.Map Name Value
   }
 
@@ -57,6 +58,7 @@ emptyConfig = HiperConfig
   { hcPaths = []
   , hcFile = ""
   , hcExtensions = ["yaml"]
+  , hcReload = False
   , hcDefaults = M.empty
   }
 
@@ -68,10 +70,10 @@ addDefault config name val =
     _ -> Nothing
 
 -- | Hiper
-data Hiper = H {
-    values   :: IORef (M.Map Name Value)
-  , hcConfig :: HiperConfig
-  }
+data Hiper = H { values   :: IORef (M.Map Name Value)
+               , threadId :: Maybe ThreadId
+               , hcConfig :: HiperConfig
+               }
 
 -- | Take declaration of how config should be loaded and load it
 loadConfig :: HiperConfig -> IO Hiper
@@ -84,10 +86,16 @@ loadConfig c = do
 
   mapIORef <- newIORef $ M.union configFileMap (hcDefaults c)
   -- start thread watching for changes in the files
-  let hiper = H {values = mapIORef, hcConfig = c}
+  let hiper = H {values = mapIORef, threadId = Nothing, hcConfig = c}
 
-  _ <- forkIO (watchForChanges hiper)
-  return $ hiper
+  threadHandle <-
+    if hcReload c == True
+    then do
+      t <- forkIO (watchForChanges hiper)
+      return $ Just t
+    else return Nothing
+
+  return $ hiper { threadId = threadHandle }
 
 -- | parseConfigFile parses provided file
 parseConfigFile :: FilePath -> IO (M.Map Name Value)
@@ -145,10 +153,10 @@ parseEnv s = case parseEnvVal s of
 -- to the first one found according to configuration
 -- Returns Nothing for non-complete configuration.
 configFilePath :: HiperConfig -> IO (Maybe FilePath)
-configFilePath (HiperConfig [] _ _ _) = return Nothing
-configFilePath (HiperConfig _"" _ _) = return Nothing
-configFilePath (HiperConfig _ _ [] _) = return Nothing
-configFilePath (HiperConfig paths file extensions _) = do
+configFilePath (HiperConfig [] _ _ _ _) = return Nothing
+configFilePath (HiperConfig _"" _ _ _) = return Nothing
+configFilePath (HiperConfig _ _ [] _ _) = return Nothing
+configFilePath (HiperConfig paths file extensions _ _) = do
   listToMaybe <$> filterM doesFileExist (filePaths paths extensions file)
 
 filePaths :: [String] -> [String] -> String -> [FilePath]

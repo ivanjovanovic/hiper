@@ -180,7 +180,8 @@ watchForChanges h = withManager $ \mgr -> do
     (const True)
     (reloadFromFile h)
 
-  forever $ threadDelay 1000000
+  putStrLn $ "Watching configuration files for reload every 5 seconds"
+  forever $ threadDelay 5000000
 
 reloadFromFile :: Hiper -> Action
 reloadFromFile h = \_ -> do

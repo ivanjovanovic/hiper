@@ -55,5 +55,6 @@ hiperConfig = H.addDefault emptyConfig "port" (9000 :: Int)
     emptyConfig = H.emptyConfig
       { H.hcPaths = ["", "/tmp"]
       , H.hcFile = "test"
+      , H.hcReload = True
       , H.hcExtensions = ["yaml"]
       }

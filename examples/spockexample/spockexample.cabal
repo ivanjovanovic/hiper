@@ -23,8 +23,6 @@ executable spockexample
                      , hiper
                      , text
   ghc-options:
-              -O2
               -Wall
               -fwarn-tabs
               -funbox-strict-fields
-              -Werror

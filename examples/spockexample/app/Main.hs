@@ -1,15 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Web.Spock
-import Web.Spock.Config
+import           Web.Spock
+import           Web.Spock.Config
 
-import Control.Monad.Trans
-import Data.Monoid
-import Data.IORef
-import qualified Data.Text as T
+import           Control.Monad.Trans
+import           Data.IORef
+import           Data.Monoid
+import qualified Data.Text           as T
 
-import qualified Data.Hiper as H
+import qualified Data.Hiper          as H
 
 data MySession = EmptySession
 data MyAppState = DummyAppState (IORef Int)
@@ -20,11 +20,11 @@ main = do
     Just conf -> do
       hiper <- H.loadConfig conf
       port <- H.lookup hiper "port" :: IO (Maybe Int)
-      maybe error (run hiper) port
+      maybe errorMsg (run hiper) port
     Nothing -> putStrLn "Config is wrong"
 
   where
-    error = print "error starting, no port defined"
+    errorMsg = print ("error starting, no port defined" :: String)
     run h p = do
       ref <- newIORef 0
       spockCfg <- defaultSpockCfg EmptySession PCNoDatabase (DummyAppState ref)
@@ -38,7 +38,7 @@ app h =
        get ("config") $ do
          port <- liftIO $ (H.lookup h "port" :: IO (Maybe Int))
          let result = case port of
-               Just p -> p
+               Just p  -> p
                Nothing -> 0
          text $ T.pack (show result)
 
@@ -53,7 +53,7 @@ hiperConfig :: Maybe H.HiperConfig
 hiperConfig = H.addDefault emptyConfig "port" (9000 :: Int)
   where
     emptyConfig = H.emptyConfig
-      { H.hcPaths = [T.pack "", T.pack "/tmp"]
-      , H.hcFile = (T.pack "test")
-      , H.hcExtensions = [T.pack "yaml"]
+      { H.hcPaths = ["", "/tmp"]
+      , H.hcFile = "test"
+      , H.hcExtensions = ["yaml"]
       }

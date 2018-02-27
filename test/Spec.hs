@@ -1,16 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Test.Hspec
-import Data.Text
-import qualified Data.Map as M
-import System.Directory
-import System.IO
-import System.Environment
-import Prelude hiding (lookup)
+import qualified Data.Map           as M
+import           Data.Text
+import           Prelude            hiding (lookup)
+import           System.Directory
+import           System.Environment
+import           System.IO
+import           Test.Hspec
 
-import Data.Hiper
-import Data.Hiper.Types
+import           Data.Hiper
+import           Data.Hiper.Types
 
 main :: IO ()
 main = hspec $ do

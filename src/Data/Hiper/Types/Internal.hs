@@ -4,8 +4,8 @@ module Data.Hiper.Types.Internal
        , Value(..)
        ) where
 
-import Data.Text
-import Data.Scientific
+import           Data.Scientific
+import           Data.Text
 
 -- | Values stored in the config
 data Value = Bool Bool
@@ -22,9 +22,9 @@ class Configurable a where
 
   fromValueList :: Value -> Maybe [a]
   fromValueList (List xs) = mapM fromValue xs
-  fromValueList _ = Nothing
+  fromValueList _         = Nothing
 
   toValueList :: [a] -> Maybe Value
   toValueList xs = case mapM toValue xs of
     Just vs -> Just (List vs)
-    _ -> Nothing
+    _       -> Nothing

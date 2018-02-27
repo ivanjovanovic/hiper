@@ -3,4 +3,4 @@ module Data.Hiper.Types
        , Configurable (toValue, fromValue)
        ) where
 
-import Data.Hiper.Types.Internal
+import           Data.Hiper.Types.Internal

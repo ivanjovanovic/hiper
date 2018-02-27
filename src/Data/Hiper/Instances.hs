@@ -4,18 +4,18 @@
 
 module Data.Hiper.Instances () where
 
-import Data.Text.Encoding (encodeUtf8)
-import Data.Hiper.Types.Internal
-import Data.Int (Int8, Int16, Int32, Int64)
-import Data.Word (Word, Word8, Word16, Word32, Word64)
-import Foreign.C.Types (CDouble, CFloat)
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as L
-import qualified Data.Text.Encoding as E
-import qualified Data.Text.Lazy.Encoding as LE
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.Scientific as Scientific
+import qualified Data.ByteString           as B
+import qualified Data.ByteString.Lazy      as LB
+import           Data.Hiper.Types.Internal
+import           Data.Int                  (Int16, Int32, Int64, Int8)
+import qualified Data.Scientific           as Scientific
+import qualified Data.Text                 as T
+import           Data.Text.Encoding        (encodeUtf8)
+import qualified Data.Text.Encoding        as E
+import qualified Data.Text.Lazy            as L
+import qualified Data.Text.Lazy.Encoding   as LE
+import           Data.Word                 (Word, Word16, Word32, Word64, Word8)
+import           Foreign.C.Types           (CDouble, CFloat)
 
 instance  Configurable Value where
   fromValue = Just
@@ -27,7 +27,7 @@ instance Configurable a => Configurable [a] where
 
 instance Configurable Bool where
   fromValue (Bool v) = Just v
-  fromValue _ = Nothing
+  fromValue _        = Nothing
 
   toValue x = Just (Bool x)
 
@@ -35,7 +35,7 @@ convertNumberToNum :: (Num a) => Value -> Maybe a
 convertNumberToNum (Number r) =
   case Scientific.floatingOrInteger r of
     (Right i) -> Just $ fromIntegral i
-    _ -> Nothing
+    _         -> Nothing
 convertNumberToNum _ = Nothing
 
 
@@ -91,7 +91,7 @@ convertNumberToFractional :: (RealFloat a) => Value -> Maybe a
 convertNumberToFractional (Number r) =
     case Scientific.floatingOrInteger r of
       (Left v) -> Just v
-      _ -> Nothing
+      _        -> Nothing
 convertNumberToFractional _ = Nothing
 
 convertFractionalToNumber :: (RealFloat a) => a -> Maybe Value
@@ -127,13 +127,13 @@ instance Configurable CFloat where
 
 instance Configurable T.Text where
   fromValue (String t) = Just t
-  fromValue _ = Nothing
+  fromValue _          = Nothing
 
   toValue t = Just $ String t
 
 instance Configurable Char where
   fromValue (String t) | T.length t == 1 = Just $ T.head t
-  fromValue _ = Nothing
+  fromValue _          = Nothing
 
   toValue t = Just $ String $ T.pack [t]
 

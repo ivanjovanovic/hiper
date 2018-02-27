@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ivanjovanovic/hiper.svg?branch=master)](https://travis-ci.org/ivanjovanovic/hiper)
+
 # Hiper - Viper inspired configuration library for Haskell
 
 ## Requirements

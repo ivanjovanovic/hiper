@@ -6,16 +6,17 @@ import           Web.Spock.Config
 
 import           Control.Monad.Trans
 import           Data.IORef
+import           Data.Maybe          (fromMaybe)
 import           Data.Monoid
 import qualified Data.Text           as T
 
 import qualified Data.Hiper          as H
 
 data MySession = EmptySession
-data MyAppState = DummyAppState (IORef Int)
+newtype MyAppState = DummyAppState (IORef Int)
 
 main :: IO ()
-main = do
+main =
   case hiperConfig of
     Just conf -> do
       hiper <- H.loadConfig conf
@@ -35,11 +36,9 @@ app h =
     do get root $
          text "hello"
 
-       get ("config") $ do
-         port <- liftIO $ (H.lookup h "port" :: IO (Maybe Int))
-         let result = case port of
-               Just p  -> p
-               Nothing -> 0
+       get "config" $ do
+         port <- liftIO (H.lookup h "port" :: IO (Maybe Int))
+         let result = fromMaybe 0 port
          text $ T.pack (show result)
 
 

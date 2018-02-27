@@ -26,38 +26,38 @@ main = hspec $ do
       val <- lookup hiper "test" :: IO (Maybe Bool)
       val `shouldBe` Just True
 
-  describe "Config file selection" $ do
+  describe "Config file selection" $
     it "selects first config file found in provided config" $ do
-      let config = emptyConfig
-            { hcPaths = ["", "/tmp"]
-            , hcFile = "test"
-            , hcExtensions = ["yaml"]
-            }
-      configFile <- configFilePath config
-      configFile `shouldBe` Nothing
-      withFile "/tmp/test.yaml" WriteMode (\_ -> return ())
-      foundConfigFile <- configFilePath config
-      foundConfigFile `shouldBe` Just "/tmp/test.yaml"
-      removeFile "/tmp/test.yaml"
+    let config = emptyConfig
+          { hcPaths = ["", "/tmp"]
+          , hcFile = "test"
+          , hcExtensions = ["yaml"]
+          }
+    configFile <- configFilePath config
+    configFile `shouldBe` Nothing
+    withFile "/tmp/test.yaml" WriteMode (\_ -> return ())
+    foundConfigFile <- configFilePath config
+    foundConfigFile `shouldBe` Just "/tmp/test.yaml"
+    removeFile "/tmp/test.yaml"
 
-  describe "Yaml config parsing" $ do
+  describe "Yaml config parsing" $
 
     it "Should properly flatten the config" $ do
-      let config = emptyConfig
-            { hcPaths = ["./test/files"]
-            , hcFile = "test"
-            , hcExtensions = ["yml"]
-            }
+    let config = emptyConfig
+          { hcPaths = ["./test/files"]
+          , hcFile = "test"
+          , hcExtensions = ["yml"]
+          }
 
-      hiper <- loadConfig config
-      firstLevel <- lookup hiper "firstLevel" :: IO (Maybe Int)
-      firstLevel `shouldBe` Just 1
-      secondLevel <- lookup hiper "second.level" :: IO (Maybe Int)
-      secondLevel `shouldBe` Just 2
-      thirdLevel <- lookup hiper "third.fourth.fifth" :: IO (Maybe Text)
-      thirdLevel `shouldBe` Just "test string"
-      arrayValue <- lookup hiper "sixt" :: IO (Maybe [Text])
-      arrayValue `shouldBe` Just ["one", "two", "three"]
+    hiper <- loadConfig config
+    firstLevel <- lookup hiper "firstLevel" :: IO (Maybe Int)
+    firstLevel `shouldBe` Just 1
+    secondLevel <- lookup hiper "second.level" :: IO (Maybe Int)
+    secondLevel `shouldBe` Just 2
+    thirdLevel <- lookup hiper "third.fourth.fifth" :: IO (Maybe Text)
+    thirdLevel `shouldBe` Just "test string"
+    arrayValue <- lookup hiper "sixt" :: IO (Maybe [Text])
+    arrayValue `shouldBe` Just ["one", "two", "three"]
 
   describe "Default overloading" $ do
     it "should take from defaults if not in the file" $ do

@@ -1,5 +1,5 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings          #-}
+
+{-# LANGUAGE OverloadedStrings #-}
 module Data.Hiper
     (
       -- * Types
@@ -20,16 +20,15 @@ module Data.Hiper
 
 import           Control.Concurrent
 import           Control.Monad
-import           Control.Monad             (join)
 import qualified Data.ByteString           as BS
 import qualified Data.HashMap.Lazy         as HM
 import           Data.IORef
 import qualified Data.Map.Lazy             as M
-import           Data.Maybe                (listToMaybe)
-import           Data.Text                 hiding (take)
+import           Data.Maybe                (fromMaybe, listToMaybe)
+import           Data.Text
 import qualified Data.Vector               as V
 import qualified Data.Yaml                 as Y
-import           Prelude                   hiding (concat, lookup)
+import           Prelude                   hiding (lookup)
 import           System.Directory
 import           System.Environment
 import           System.FilePath
@@ -89,7 +88,7 @@ loadConfig c = do
   let hiper = H {values = mapIORef, threadId = Nothing, hcConfig = c}
 
   threadHandle <-
-    if hcReload c == True
+    if hcReload c
     then do
       t <- forkIO (watchForChanges hiper)
       return $ Just t
@@ -100,13 +99,13 @@ loadConfig c = do
 -- | parseConfigFile parses provided file
 parseConfigFile :: FilePath -> IO (M.Map Name Value)
 parseConfigFile f = do
-  fileContents <- do withFile f ReadMode (\h -> BS.hGetContents h)
+  fileContents <- withFile f ReadMode BS.hGetContents
   return $ maybe M.empty foldValueToMap (Y.decode fileContents)
 
 -- | Given the root of the name, return map with all keys namespaced by the root.
 -- Namespacing is dot separated @root.name@
 namespaceMap :: Name -> M.Map Name a -> M.Map Name a
-namespaceMap name m = M.mapKeys (\key -> append (append name ".") key ) m
+namespaceMap name m = M.mapKeys (append (append name ".") ) m
 
 foldValueToMap :: Y.Value -> M.Map Name Value
 foldValueToMap (Y.Object hm) = M.foldrWithKey f M.empty $ M.fromList (HM.toList hm)
@@ -123,14 +122,14 @@ foldValueToMap (Y.Object hm) = M.foldrWithKey f M.empty $ M.fromList (HM.toList 
     parse n (Y.String v) = M.fromList [(n, String v)]
     parse n (Y.Number v) = M.fromList [(n, Number v)]
     parse n (Y.Bool v) = M.fromList [(n, Bool v)]
-    parse n (Y.Null) = M.fromList [(n, Null)]
+    parse n Y.Null = M.fromList [(n, Null)]
 foldValueToMap _ = M.empty
 
 convertValue :: Y.Value -> Value
 convertValue (Y.String v) = String v
 convertValue (Y.Number v) = Number v
 convertValue (Y.Bool v)   = Bool v
-convertValue (Y.Null)     = Null
+convertValue Y.Null       = Null
 convertValue _            = Null
 
 -- | lookup allows getting the value from the config registry.
@@ -156,7 +155,7 @@ configFilePath :: HiperConfig -> IO (Maybe FilePath)
 configFilePath (HiperConfig [] _ _ _ _) = return Nothing
 configFilePath (HiperConfig _"" _ _ _) = return Nothing
 configFilePath (HiperConfig _ _ [] _ _) = return Nothing
-configFilePath (HiperConfig paths file extensions _ _) = do
+configFilePath (HiperConfig paths file extensions _ _) =
   listToMaybe <$> filterM doesFileExist (filePaths paths extensions file)
 
 filePaths :: [String] -> [String] -> String -> [FilePath]
@@ -168,11 +167,9 @@ filePaths paths extensions name = do
 watchForChanges :: Hiper -> IO ()
 watchForChanges h = withManager $ \mgr -> do
   configFile <- configFilePath $ hcConfig h
-  let file = case configFile of
-        Just f  -> f
-        Nothing ->  "."
+  let file = fromMaybe "." configFile
 
-  putStrLn $ "watching dir: " ++ (show $ takeDirectory file)
+  putStrLn $ "watching dir: " ++ show (takeDirectory file)
 
   void $ watchDir
     mgr
@@ -180,11 +177,11 @@ watchForChanges h = withManager $ \mgr -> do
     (const True)
     (reloadFromFile h)
 
-  putStrLn $ "Watching configuration files for reload every 5 seconds"
+  putStrLn "Watching configuration files for reload every 5 seconds"
   forever $ threadDelay 5000000
 
 reloadFromFile :: Hiper -> Action
-reloadFromFile h = \_ -> do
+reloadFromFile h _ = do
   putStrLn "Reloading configuration"
   -- Find configuration file from the configured paths
   configFile <- configFilePath $ hcConfig h
